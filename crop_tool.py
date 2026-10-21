@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manual 16:10 cropper — full height retained, width cropped via click."""
+"""Manual cropper — full height retained, width cropped via click."""
 
 from __future__ import annotations
 
@@ -9,14 +9,53 @@ from pathlib import Path
 from PIL import Image, ImageTk
 import tkinter as tk
 
-ASPECT_W, ASPECT_H = 16, 10
+DEFAULT_ASPECT = "16:10"
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 PARENT_DIR = Path(__file__).resolve().parent
-SOURCE_DIR = PARENT_DIR / "source_images"
-OUTPUT_DIR = PARENT_DIR / "cropped"
+DEFAULT_SOURCE_DIR = PARENT_DIR / "source_images"
+DEFAULT_OUTPUT_DIR = PARENT_DIR / "cropped"
 
 
-def list_images(folder: Path, output_dir: Path = OUTPUT_DIR) -> list[Path]:
+def ask(label: str, default: str) -> str:
+    value = input(f"{label} [{default}]: ").strip()
+    return value or default
+
+
+def parse_aspect(text: str) -> tuple[float, float]:
+    parts = text.strip().replace("/", ":").split(":")
+    if len(parts) != 2:
+        raise ValueError("use W:H, for example 16:10")
+    width, height = float(parts[0]), float(parts[1])
+    if width <= 0 or height <= 0:
+        raise ValueError("width and height must be greater than 0")
+    return width, height
+
+
+def ask_aspect(default: str = DEFAULT_ASPECT) -> tuple[float, float, str]:
+    while True:
+        raw = ask("Aspect ratio (W:H)", default)
+        try:
+            width, height = parse_aspect(raw)
+        except ValueError as err:
+            print(f"Invalid aspect ratio ({err}).")
+            continue
+        return width, height, raw
+
+
+def ask_dir(label: str, default: Path, must_exist: bool) -> Path:
+    while True:
+        raw = ask(label, str(default))
+        path = Path(raw).expanduser()
+        if not path.is_absolute():
+            path = PARENT_DIR / path
+        path = path.resolve()
+        if must_exist and not path.is_dir():
+            print(f"Folder not found: {path}")
+            continue
+        return path
+
+
+def list_images(folder: Path, output_dir: Path) -> list[Path]:
     return sorted(
         p
         for p in folder.iterdir()
@@ -26,8 +65,8 @@ def list_images(folder: Path, output_dir: Path = OUTPUT_DIR) -> list[Path]:
     )
 
 
-def crop_width_for_height(height: int) -> int:
-    return round(height * ASPECT_W / ASPECT_H)
+def crop_width_for_height(height: int, aspect_w: float, aspect_h: float) -> int:
+    return round(height * aspect_w / aspect_h)
 
 
 def compute_crop_left(click_x: float | None, img_w: int, crop_w: int) -> int:
@@ -56,9 +95,22 @@ def compute_crop_left(click_x: float | None, img_w: int, crop_w: int) -> int:
 
 
 class CropApp:
-    def __init__(self, images: list[Path]) -> None:
-        self.images = images
-        self.index = 0
+    def __init__(
+        self,
+        images: list[Path],
+        output_dir: Path,
+        aspect_w: float,
+        aspect_h: float,
+        aspect_label: str,
+    ) -> None:
+        self.pending = list(images)
+        self.history: list[Path] = []
+        self.review: int | None = None
+        self.total = len(images)
+        self.output_dir = output_dir
+        self.aspect_w = aspect_w
+        self.aspect_h = aspect_h
+        self.aspect_label = aspect_label
         self.crop_box: tuple[int, int, int, int] | None = None  # left, top, right, bottom
         self.pil_image: Image.Image | None = None
         self.display_scale = 1.0
@@ -66,26 +118,41 @@ class CropApp:
         self.offset_y = 0
         self.photo: ImageTk.PhotoImage | None = None
 
-        OUTPUT_DIR.mkdir(exist_ok=True)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
         self.root = tk.Tk()
-        self.root.title("16:10 Crop Tool")
+        self.root.title(f"{aspect_label} Crop Tool")
         self.root.configure(bg="#1a1a1a")
         self.root.minsize(800, 500)
 
+        header = tk.Frame(self.root, bg="#1a1a1a")
+        header.pack(side=tk.TOP, fill=tk.X)
+
+        self.counter = tk.Label(
+            header,
+            text="",
+            fg="#ff3b30",
+            bg="#1a1a1a",
+            font=("Helvetica", 18, "bold"),
+            padx=14,
+            pady=8,
+        )
+        self.counter.pack(side=tk.LEFT)
+
         self.status = tk.Label(
-            self.root,
+            header,
             text="",
             fg="#cccccc",
             bg="#1a1a1a",
             font=("Helvetica", 13),
             pady=8,
+            anchor=tk.W,
         )
-        self.status.pack(side=tk.TOP, fill=tk.X)
+        self.status.pack(side=tk.LEFT, fill=tk.X, expand=True)
 
         self.hint = tk.Label(
             self.root,
-            text="Click to place crop  ·  Enter to confirm  ·  Esc to clear box",
+            text="Click to place crop  ·  Enter to confirm  ·  Esc to clear  ·  → skip  ·  ← recrop",
             fg="#888888",
             bg="#1a1a1a",
             font=("Helvetica", 11),
@@ -98,27 +165,46 @@ class CropApp:
 
         self.canvas.bind("<Button-1>", self.on_click)
         self.canvas.bind("<Configure>", self.on_resize)
-        self.root.bind("<Return>", self.on_enter)
-        self.root.bind("<KP_Enter>", self.on_enter)
-        self.root.bind("<Escape>", self.on_escape)
+        self.root.bind_all("<Return>", self.on_enter)
+        self.root.bind_all("<KP_Enter>", self.on_enter)
+        self.root.bind_all("<Escape>", self.on_escape)
+        self.root.bind_all("<Right>", self.on_right)
+        self.root.bind_all("<Left>", self.on_left)
 
         self.load_current()
 
+    def current_path(self) -> Path | None:
+        if self.review is not None:
+            return self.history[self.review]
+        if not self.pending:
+            return None
+        return self.pending[0]
+
+    def counter_text(self) -> str:
+        if self.review is not None:
+            current = self.review + 1
+        elif not self.pending:
+            current = self.total
+        else:
+            current = len(self.history) + 1
+        return f"{current}/{self.total}"
+
     def load_current(self) -> None:
-        if self.index >= len(self.images):
+        path = self.current_path()
+        self.crop_box = None
+        self.counter.config(text=self.counter_text())
+        if path is None:
             self.status.config(text="Done — all images cropped.")
+            self.root.title(f"{self.aspect_label} Crop Tool")
             self.canvas.delete("all")
             self.pil_image = None
-            self.crop_box = None
             return
 
-        path = self.images[self.index]
         self.pil_image = Image.open(path).convert("RGB")
-        self.crop_box = None
-        self.root.title(f"16:10 Crop Tool — {path.name} ({self.index + 1}/{len(self.images)})")
+        self.root.title(f"{self.aspect_label} Crop Tool — {path.name}")
+        note = "recrop  ·  " if self.review is not None else ""
         self.status.config(
-            text=f"{self.index + 1}/{len(self.images)}  ·  {path.name}  ·  "
-            f"{self.pil_image.width}×{self.pil_image.height}"
+            text=f"{note}{path.name}  ·  {self.pil_image.width}×{self.pil_image.height}"
         )
         self.render()
 
@@ -181,7 +267,7 @@ class CropApp:
         if self.pil_image is None:
             return
         iw, ih = self.pil_image.size
-        crop_w = crop_width_for_height(ih)
+        crop_w = crop_width_for_height(ih, self.aspect_w, self.aspect_h)
         left = compute_crop_left(click_x, iw, crop_w)
         self.crop_box = (left, 0, left + min(crop_w, iw), ih)
         self.render()
@@ -208,18 +294,51 @@ class CropApp:
         self.crop_box = None
         self.render()
 
+    def on_right(self, _event: tk.Event | None = None) -> None:  # type: ignore[type-arg]
+        if self.review is not None:
+            if self.review + 1 < len(self.history):
+                self.review += 1
+            else:
+                self.review = None
+            self.load_current()
+            return
+        if len(self.pending) < 2:
+            return
+        skipped = self.pending.pop(0)
+        self.pending.append(skipped)
+        print(f"Skipped {skipped.name}")
+        self.load_current()
+
+    def on_left(self, _event: tk.Event | None = None) -> None:  # type: ignore[type-arg]
+        if not self.history:
+            return
+        if self.review is None:
+            self.review = len(self.history) - 1
+        elif self.review > 0:
+            self.review -= 1
+        else:
+            return
+        self.load_current()
+
     def on_resize(self, _event: tk.Event) -> None:  # type: ignore[type-arg]
         self.render()
 
     def save_and_next(self) -> None:
         if self.pil_image is None or self.crop_box is None:
             return
-        path = self.images[self.index]
+        path = self.current_path()
+        if path is None:
+            return
         cropped = self.pil_image.crop(self.crop_box)
-        out = OUTPUT_DIR / path.name
+        out = self.output_dir / path.name
         cropped.save(out, quality=95)
         print(f"Saved {out}  ({cropped.width}×{cropped.height})")
-        self.index += 1
+        if self.review is None:
+            self.history.append(self.pending.pop(0))
+        elif self.review + 1 < len(self.history):
+            self.review += 1
+        else:
+            self.review = None
         self.load_current()
 
     def run(self) -> None:
@@ -227,13 +346,16 @@ class CropApp:
 
 
 def main() -> None:
-    folder = Path(sys.argv[1]) if len(sys.argv) > 1 else SOURCE_DIR
-    images = list_images(folder)
+    aspect_w, aspect_h, aspect_label = ask_aspect()
+    source_dir = ask_dir("Source folder", DEFAULT_SOURCE_DIR, must_exist=True)
+    output_dir = ask_dir("Output folder", DEFAULT_OUTPUT_DIR, must_exist=False)
+
+    images = list_images(source_dir, output_dir)
     if not images:
-        print(f"No uncropped images left in {folder}")
+        print(f"No uncropped images left in {source_dir}")
         sys.exit(0)
-    print(f"{len(images)} remaining → cropped into {OUTPUT_DIR}")
-    CropApp(images).run()
+    print(f"{len(images)} remaining at {aspect_label} → {output_dir}")
+    CropApp(images, output_dir, aspect_w, aspect_h, aspect_label).run()
 
 
 if __name__ == "__main__":
