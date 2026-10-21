@@ -72,9 +72,9 @@ Sample stills from *Spider-Man: Across the Spider-Verse*, cropped to 16:10. Sour
 
 | Original | Cropped |
 | --- | --- |
-| <img alt="Original still" width="420" src="source_images/Spider-Verse-1.jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Verse-1.jpg"> |
-| <img alt="Original still" width="420" src="source_images/Spider-Verse-2.jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Verse-2.jpg"> |
-| <img alt="Original still" width="420" src="source_images/Spider-Verse-3.jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Verse-3.jpg"> |
+| <img alt="Original still" width="420" src="https://github.com/RoopjeetSingh/Wallpaper-Crop/blob/de03538b6daef46b1b8d9ac789cc43860df7747b/source_images/Spider-Verse-1.jpg"> | <img alt="Cropped still" width="420" src="https://github.com/RoopjeetSingh/Wallpaper-Crop/blob/de03538b6daef46b1b8d9ac789cc43860df7747b/cropped/Spider-Verse-1.jpg"> |
+| <img alt="Original still" width="420" src="https://github.com/RoopjeetSingh/Wallpaper-Crop/blob/de03538b6daef46b1b8d9ac789cc43860df7747b/source_images/Spider-Verse-2.jpg"> | <img alt="Cropped still" width="420" src="https://github.com/RoopjeetSingh/Wallpaper-Crop/blob/de03538b6daef46b1b8d9ac789cc43860df7747b/cropped/Spider-Verse-2.jpg"> |
+| <img alt="Original still" width="420" src="https://github.com/RoopjeetSingh/Wallpaper-Crop/blob/de03538b6daef46b1b8d9ac789cc43860df7747b/source_images/Spider-Verse-3.jpg"> | <img alt="Cropped still" width="420" src="https://github.com/RoopjeetSingh/Wallpaper-Crop/blob/de03538b6daef46b1b8d9ac789cc43860df7747b/cropped/Spider-Verse-3.jpg"> |
 
 ## Demo
 
