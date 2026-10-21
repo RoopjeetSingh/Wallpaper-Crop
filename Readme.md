@@ -78,8 +78,9 @@ Sample stills from *Spider-Man: Across the Spider-Verse*, cropped to 16:10. Sour
 
 ## Demo
 
-  <video src="https://github.com/user-attachments/assets/09ddfe65-2148-49bf-b36f-6c4127ebc16b" width="720" controls></video>
-  Demo video
+https://github.com/user-attachments/assets/09ddfe65-2148-49bf-b36f-6c4127ebc16b
+
+Demo video
 
 ## Background
 
