@@ -72,9 +72,9 @@ Sample stills from *Spider-Man: Across the Spider-Verse*, cropped to 16:10. Sour
 
 | Original | Cropped |
 | --- | --- |
-| <img alt="Original still" width="420" src="source_images/Spider-Man Across the Spider-Verse (4K).mkv_snapshot_00.00.01_[2023.08.09_01.41.44].jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Man Across the Spider-Verse (4K).mkv_snapshot_00.00.01_[2023.08.09_01.41.44].jpg"> |
-| <img alt="Original still" width="420" src="source_images/Spider-Man Across the Spider-Verse (4K).mkv_snapshot_00.00.01_[2023.08.09_02.24.57].jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Man Across the Spider-Verse (4K).mkv_snapshot_00.00.01_[2023.08.09_02.24.57].jpg"> |
-| <img alt="Original still" width="420" src="source_images/Spider-Man Across the Spider-Verse (4K).mkv_snapshot_00.00.01_[2023.08.09_02.25.18].jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Man Across the Spider-Verse (4K).mkv_snapshot_00.00.01_[2023.08.09_02.25.18].jpg"> |
+| <img alt="Original still" width="420" src="source_images/Spider-Verse-1.jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Verse-1.jpg"> |
+| <img alt="Original still" width="420" src="source_images/Spider-Verse-2.jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Verse-2.jpg"> |
+| <img alt="Original still" width="420" src="source_images/Spider-Verse-3.jpg"> | <img alt="Cropped still" width="420" src="cropped/Spider-Verse-3.jpg"> |
 
 ## Demo
 
