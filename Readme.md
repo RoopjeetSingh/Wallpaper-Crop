@@ -1,0 +1,1 @@
+A tool that crops any images to wallpaper

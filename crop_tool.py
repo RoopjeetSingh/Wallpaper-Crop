@@ -11,8 +11,9 @@ import tkinter as tk
 
 ASPECT_W, ASPECT_H = 16, 10
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
-SOURCE_DIR = Path(__file__).resolve().parent
-OUTPUT_DIR = SOURCE_DIR / "cropped"
+PARENT_DIR = Path(__file__).resolve().parent
+SOURCE_DIR = PARENT_DIR / "source_images"
+OUTPUT_DIR = PARENT_DIR / "cropped"
 
 
 def list_images(folder: Path, output_dir: Path = OUTPUT_DIR) -> list[Path]:
